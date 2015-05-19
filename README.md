@@ -16,6 +16,7 @@ This document describe the analysis done for the prediction assignment of the pr
   test<-pml_training[-intrain,]
 ```
 3.Next is the data cleaning stage.
+
   a. First the column x present in the data is removed since it is just an index and will not be helpful for the analysis
 ```{r}
   ###remove column x which is just the index###
