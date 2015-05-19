@@ -2,20 +2,26 @@
 This document describe the analysis done for the prediction assignment of the practical machine learning course.
 
 1.The first step is to load the csv file data to dataframe
+```{r}
   pml_training<-read.csv("C:/Ebooks/R/coursera/Machine learning/Raw data/pml-training.csv")
   pml_testing<-read.csv("C:/Ebooks/R/coursera/Machine learning/Raw data/pml-testing.csv")
+```
 
 2.After loading the files, I split the pml_training data into test and training data so that I can cross validate the results/output.Pml_testing data is left untouched till finalization of the model.I have split the data such that 75% of the data is classified as training and rest as testing.
-
+```{r}
   library(caret)
   library(kernlab)
   intrain<-createDataPartition(pml_training$classe,p=.75,list=FALSE)
   training<-pml_training[intrain,]
   test<-pml_training[-intrain,]
+```
 3.Next is the data cleaning stage.
   a. First the column x present in the data is removed since it is just an index and will not be helpful for the analysis
+```{r}
   ###remove column x which is the just the index###
   train_cln1<-training[,-1]
+```
+
 
 
 This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
