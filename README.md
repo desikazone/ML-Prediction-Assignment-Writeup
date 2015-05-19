@@ -24,16 +24,16 @@ This document describe the analysis done for the prediction assignment of the pr
   b. Second remove the columns with more than 60% NAs. Columns with more than 60% NAs will not be good enough to contribute to the predictive model.
 ```{r}
   ###Removing variables with more than 60% NAs####
-  remove_var<-rep(NA,1)
-  temp      <-vector('character')
+  remove_var<-rep(NA,1)#create a vector with length 1 containing value NA
+  temp      <-vector('character') #empty vectory
   for (i in 1:length(train_cln1))
   {
-   if (sum(is.na(train_cln1[i]))/nrow(train_cln1[i]) >=.6) temp<-colnames(train_cln1[i])
-   if (length(temp)==1) remove_var<-unique(rbind(remove_var,temp))
+   if (sum(is.na(train_cln1[i]))/nrow(train_cln1[i]) >=.6) temp<-colnames(train_cln1[i])#get colname if NAs >=.6
+   if (length(temp)==1) remove_var<-unique(rbind(remove_var,temp))#collate all colnames with NAs>=.6
   }
-  remove_var     <-as.vector(remove_var)
-  varNA          <-names(train_cln1) %in% remove_var
-  train_cln2     <-train_cln1[!varNA]
+  remove_var     <-as.vector(remove_var)#convert into vector
+  varNA          <-names(train_cln1) %in% remove_var #finalizing columns with NAs >=.6
+  train_cln2     <-train_cln1[!varNA] #dataset where columns with NAs>=.6 removed
 ```
 
 
