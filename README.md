@@ -18,10 +18,23 @@ This document describe the analysis done for the prediction assignment of the pr
 3.Next is the data cleaning stage.
   a. First the column x present in the data is removed since it is just an index and will not be helpful for the analysis
 ```{r}
-  ###remove column x which is the just the index###
+  ###remove column x which is just the index###
   train_cln1<-training[,-1]
 ```
-
+  b. Second remove the columns with more than 60% NAs. Columns with more than 60% NAs will not be good enough to contribute to the predictive model.
+```{r}
+  ###Removing variables with more than 60% NAs####
+  remove_var<-rep(NA,1)
+  temp      <-vector('character')
+  for (i in 1:length(train_cln1))
+  {
+   if (sum(is.na(train_cln1[i]))/nrow(train_cln1[i]) >=.6) temp<-colnames(train_cln1[i])
+   if (length(temp)==1) remove_var<-unique(rbind(remove_var,temp))
+  }
+  remove_var     <-as.vector(remove_var)
+  varNA          <-names(train_cln1) %in% remove_var
+  train_cln2     <-train_cln1[!varNA]
+```
 
 
 This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
