@@ -51,9 +51,58 @@ cln1           <-names(train_cln3)#column names to be kept in training data
 cln2           <-names(train_cln3[-58])#column names to be kept in testing data
 test           <-test[cln1]#keep only column names in cln1 vector
 pml_testing1    <-pml_testing[cln2]#keep column names present in cln2 vector
+levels(pml_testing1$cvtd_timestamp)<-levels(train_cln3$cvtd_timestamp)#this step is included since R throws an error while predicting due to difference in levels of training and test data
 ```
+4. Next stage is model building. Two models are build one is prediction with Decision tree and the other with Random Forest. Confusion matrix is obtained to check the accuracy of both the models built. Model with high accuracy is shortlisted for the final prediction.
+```{r}
+##############Prediction using Decision Tree############
+dtree_fit<-rpart(classe~.,method="class",data=train_cln3)
+library(rattle)
+fancyRpartPlot(dtree_fit)
+dtree_predict<-predict(dtree_fit,test,type="class")
+confusionMatrix(dtree_predict,test$classe)
+Confusion Matrix and Statistics
 
-levels(pml_testing1$cvtd_timestamp)<-levels(train_cln3$cvtd_timestamp)
+          Reference
+Prediction    A    B    C    D    E
+         A 1346   44    4    1    0
+         B   29  785   55   44    0
+         C   20  117  783  119   38
+         D    0    3    5  508   34
+         E    0    0    8  132  829
+
+Overall Statistics
+                                         
+               Accuracy : 0.8668         
+                 95% CI : (0.857, 0.8762)
+    No Information Rate : 0.2845         
+    P-Value [Acc > NIR] : < 2.2e-16      
+                                         
+                  Kappa : 0.8315         
+ Mcnemar's Test P-Value : NA             
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9649   0.8272   0.9158   0.6318   0.9201
+Specificity            0.9860   0.9676   0.9274   0.9898   0.9650
+Pos Pred Value         0.9649   0.8598   0.7270   0.9236   0.8555
+Neg Pred Value         0.9860   0.9589   0.9812   0.9320   0.9817
+Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+Detection Rate         0.2745   0.1601   0.1597   0.1036   0.1690
+Detection Prevalence   0.2845   0.1862   0.2196   0.1122   0.1976
+Balanced Accuracy      0.9755   0.8974   0.9216   0.8108   0.9426
+
+###########Predictino using random forest###########
+rf_fit<-randomForest(classe~.,data=train_cln3)
+rf_predict<-predict(rf_fit,test,type="class")
+confusionMatrix(rf_predict,test$classe)
+
+
+#######since random forest method gives better accuracy using that on test data####
+rf_predict1<-predict(rf_fit,pml_testing1,type="class")
+
+
 
 This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
 
