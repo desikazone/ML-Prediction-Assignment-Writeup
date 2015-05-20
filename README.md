@@ -43,8 +43,17 @@ This document describe the analysis done for the prediction assignment of the pr
   NZVvar         <-as.vector(row.names(dataNZV[dataNZV$nzv=="TRUE",]))#obtain column names of near zero variance variables
   NZVvar_bin     <-names(train_cln2) %in% NZVvar #match and pick the final near zero variance variables
   train_cln3     <-train_cln2[!NZVvar_bin] #remove the NZV from training data
+  ```
+ d. Final step is to clean training, validation and test datasets for removal of variables identified as non-important based on above 3 steps
+ ```{r}
+ #########cleaning both validation and test data sets########
+cln1           <-names(train_cln3)#column names to be kept in training data
+cln2           <-names(train_cln3[-58])#column names to be kept in testing data
+test           <-test[cln1]#keep only column names in cln1 vector
+pml_testing1    <-pml_testing[cln2]#keep column names present in cln2 vector
 ```
- 
+
+levels(pml_testing1$cvtd_timestamp)<-levels(train_cln3$cvtd_timestamp)
 
 This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
 
