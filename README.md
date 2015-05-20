@@ -53,7 +53,7 @@ test           <-test[cln1]#keep only column names in cln1 vector
 pml_testing1    <-pml_testing[cln2]#keep column names present in cln2 vector
 levels(pml_testing1$cvtd_timestamp)<-levels(train_cln3$cvtd_timestamp)#this step is included since R throws an error while predicting due to difference in levels of training and test data
 ```
-4. Next stage is model building. Two models are build one is prediction with Decision tree and the other with Random Forest. Confusion matrix is obtained to check the accuracy of both the models built. Model with high accuracy is shortlisted for the final prediction.
+4.Next stage is model building. Two models are build one is prediction with Decision tree and the other with Random Forest. Confusion matrix is obtained to check the accuracy of both the models built. Model with high accuracy is shortlisted for the final prediction.
 ```{r}
 ##############Prediction using Decision Tree############
 dtree_fit<-rpart(classe~.,method="class",data=train_cln3)
@@ -129,7 +129,7 @@ Detection Rate         0.2845   0.1935   0.1733   0.1635   0.1837
 Detection Prevalence   0.2845   0.1939   0.1735   0.1642   0.1839
 Balanced Accuracy      1.0000   0.9997   0.9970   0.9984   0.9999
 ```
-5. Obtain the predictions by applying the model on test data.Since random forest method gives better accuracy it is finalized and applied on the test data to obtain the predictions
+5.Obtain the predictions by applying the model on test data.Since random forest method gives better accuracy it is finalized and applied on the test data to obtain the predictions
 ```{r}
 #######since random forest method gives better accuracy using that on test data####
 rf_predict1<-predict(rf_fit,pml_testing1,type="class")
