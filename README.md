@@ -156,6 +156,7 @@ cbind(problem_id=pml_testing$problem_id,as.data.frame(rf_predict1))
 19         19           B
 20         20           B
 ```
+6.Results obtained were uploaded to the coursera assignment submission gateway for online evaluation.
 
 
 
