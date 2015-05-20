@@ -61,11 +61,11 @@ library(rattle)
 fancyRpartPlot(dtree_fit)
 dtree_predict<-predict(dtree_fit,test,type="class")
 confusionMatrix(dtree_predict,test$classe)
-#Confusion Matrix and Statistics
+Confusion Matrix and Statistics
 
- #         Reference
-#Prediction    A    B    C    D    E
- #        A 1346   44    4    1    0
+          Reference
+Prediction    A    B    C    D    E
+         A 1346   44    4    1    0
          B   29  785   55   44    0
          C   20  117  783  119   38
          D    0    3    5  508   34
@@ -97,7 +97,37 @@ Balanced Accuracy      0.9755   0.8974   0.9216   0.8108   0.9426
 rf_fit<-randomForest(classe~.,data=train_cln3)
 rf_predict<-predict(rf_fit,test,type="class")
 confusionMatrix(rf_predict,test$classe)
+Confusion Matrix and Statistics
 
+          Reference
+Prediction    A    B    C    D    E
+         A 1395    0    0    0    0
+         B    0  949    2    0    0
+         C    0    0  850    1    0
+         D    0    0    3  802    0
+         E    0    0    0    1  901
+
+Overall Statistics
+                                          
+               Accuracy : 0.9986          
+                 95% CI : (0.9971, 0.9994)
+    No Information Rate : 0.2845          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+                  Kappa : 0.9982          
+ Mcnemar's Test P-Value : NA              
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            1.0000   1.0000   0.9942   0.9975   1.0000
+Specificity            1.0000   0.9995   0.9998   0.9993   0.9998
+Pos Pred Value         1.0000   0.9979   0.9988   0.9963   0.9989
+Neg Pred Value         1.0000   1.0000   0.9988   0.9995   1.0000
+Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+Detection Rate         0.2845   0.1935   0.1733   0.1635   0.1837
+Detection Prevalence   0.2845   0.1939   0.1735   0.1642   0.1839
+Balanced Accuracy      1.0000   0.9997   0.9970   0.9984   0.9999
 
 #######since random forest method gives better accuracy using that on test data####
 rf_predict1<-predict(rf_fit,pml_testing1,type="class")
