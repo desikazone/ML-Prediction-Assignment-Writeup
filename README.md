@@ -36,7 +36,15 @@ This document describe the analysis done for the prediction assignment of the pr
   varNA          <-names(train_cln1) %in% remove_var #finalizing columns with NAs >=.6
   train_cln2     <-train_cln1[!varNA] #dataset where columns with NAs>=.6 removed
 ```
-
+ c. Next step is removal of near zero variance variables.Datasets sometimes contain variables which contain almost constant values throughout the data. These are non  informative and will not add any value to the model building process.
+ ```{r}
+  ####remove Near Zero Variance variables##########
+  dataNZV        <- nearZeroVar(train_cln2, saveMetrics=TRUE)#function  to find near zero variance variables
+  NZVvar         <-as.vector(row.names(dataNZV[dataNZV$nzv=="TRUE",]))#obtain column names of near zero variance variables
+  NZVvar_bin     <-names(train_cln2) %in% NZVvar #match and pick the final near zero variance variables
+  train_cln3     <-train_cln2[!NZVvar_bin] #remove the NZV from training data
+```
+ 
 
 This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
 
