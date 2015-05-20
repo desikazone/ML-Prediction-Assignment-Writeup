@@ -128,123 +128,34 @@ Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
 Detection Rate         0.2845   0.1935   0.1733   0.1635   0.1837
 Detection Prevalence   0.2845   0.1939   0.1735   0.1642   0.1839
 Balanced Accuracy      1.0000   0.9997   0.9970   0.9984   0.9999
-
+```
+5. Obtain the predictions by applying the model on test data.Since random forest method gives better accuracy it is finalized and applied on the test data to obtain the predictions
+```{r}
 #######since random forest method gives better accuracy using that on test data####
 rf_predict1<-predict(rf_fit,pml_testing1,type="class")
-
-
-
-This analysis allows us to note two main points : 1 - Some numeric data have been imported as factor because of the presence of some characters ("#DIV/0!") 2 - Some columns have a really low completion rate (a lot of missing data)
-
-To manage the first issue we need to reimport data ignoring "#DIV/0!" values :
-
-data <- read.csv("/projects/Coursera-PracticalMachineLearning/data//pml-training.csv", na.strings=c("#DIV/0!") )
-
-And force the cast to numeric values for the specified columns (i.e.: 8 to end) :
-
-cData <- data
-for(i in c(8:ncol(cData)-1)) {cData[,i] = as.numeric(as.character(cData[,i]))}
-
-To manage the second issue we will select as feature only the column with a 100% completion rate ( as seen in analysis phase, the completion rate in this dataset is very binary) We will also filter some features which seem to be useless like "X"", timestamps, "new_window" and "num_window". We filter also user_name because we don't want learn from this feature (name cannot be a good feature in our case and we don't want to limit the classifier to the name existing in our training dataset)
-
-featuresnames <- colnames(cData[colSums(is.na(cData)) == 0])[-(1:7)]
-features <- cData[featuresnames]
-
-We have now a dataframe "features which contains all the workable features. So the first step is to split the dataset in two part : the first for training and the second for testing.
-
-xdata <- createDataPartition(y=features$classe, p=3/4, list=FALSE )
-training <- features[xdata,]
-testing <- features[-xdata,]
-
-We can now train a classifier with the training data. To do that we will use parallelise the processing with the foreach and doParallel package : we call registerDoParallel to instantiate the configuration. (By default it's assign the half of the core available on your laptop, for me it's 4, because of hyperthreading) So we ask to process 4 random forest with 150 trees each and combine then to have a random forest model with a total of 600 trees.
-
-registerDoParallel()
-model <- foreach(ntree=rep(150, 4), .combine=randomForest::combine) %dopar% randomForest(training[-ncol(training)], training$classe, ntree=ntree)
-
-To evaluate the model we will use the confusionmatrix method and we will focus on accuracy, sensitivity & specificity metrics :
-
-predictionsTr <- predict(model, newdata=training)
-confusionMatrix(predictionsTr,training$classe)
-
-## 
-## Attaching package: 'e1071'
-## 
-## L'objet suivant est masqué from 'package:Hmisc':
-## 
-##     impute
-
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    A    B    C    D    E
-##          A 4185    0    0    0    0
-##          B    0 2848    0    0    0
-##          C    0    0 2567    0    0
-##          D    0    0    0 2412    0
-##          E    0    0    0    0 2706
-## 
-## Overall Statistics
-##                                 
-##                Accuracy : 1     
-##                  95% CI : (1, 1)
-##     No Information Rate : 0.284 
-##     P-Value [Acc > NIR] : <2e-16
-##                                 
-##                   Kappa : 1     
-##  Mcnemar's Test P-Value : NA    
-## 
-## Statistics by Class:
-## 
-##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity             1.000    1.000    1.000    1.000    1.000
-## Specificity             1.000    1.000    1.000    1.000    1.000
-## Pos Pred Value          1.000    1.000    1.000    1.000    1.000
-## Neg Pred Value          1.000    1.000    1.000    1.000    1.000
-## Prevalence              0.284    0.194    0.174    0.164    0.184
-## Detection Rate          0.284    0.194    0.174    0.164    0.184
-## Detection Prevalence    0.284    0.194    0.174    0.164    0.184
-## Balanced Accuracy       1.000    1.000    1.000    1.000    1.000
-
-predictionsTe <- predict(model, newdata=testing)
-confusionMatrix(predictionsTe,testing$classe)
-
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    A    B    C    D    E
-##          A 1395    1    0    0    0
-##          B    0  946    6    0    0
-##          C    0    2  849    6    1
-##          D    0    0    0  798    1
-##          E    0    0    0    0  899
-## 
-## Overall Statistics
-##                                         
-##                Accuracy : 0.997         
-##                  95% CI : (0.994, 0.998)
-##     No Information Rate : 0.284         
-##     P-Value [Acc > NIR] : <2e-16        
-##                                         
-##                   Kappa : 0.996         
-##  Mcnemar's Test P-Value : NA            
-## 
-## Statistics by Class:
-## 
-##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity             1.000    0.997    0.993    0.993    0.998
-## Specificity             1.000    0.998    0.998    1.000    1.000
-## Pos Pred Value          0.999    0.994    0.990    0.999    1.000
-## Neg Pred Value          1.000    0.999    0.999    0.999    1.000
-## Prevalence              0.284    0.194    0.174    0.164    0.184
-## Detection Rate          0.284    0.193    0.173    0.163    0.183
-## Detection Prevalence    0.285    0.194    0.175    0.163    0.183
-## Balanced Accuracy       1.000    0.998    0.995    0.996    0.999
-
-As seen by the result of the confusionmatrix, the model is good and efficient because it has an accuracy of 0.997 and very good sensitivity & specificity values on the testing dataset. (the lowest value is 0.992 for the sensitivity of the class C)
-
-It seems also very good because It scores 100% (20/20) on the Course Project Submission (the 20 values to predict)
-
-I also try to play with preprocessing generating PCA or scale & center the features but the accuracy was lower.
+cbind(problem_id=pml_testing$problem_id,as.data.frame(rf_predict1))
+   problem_id rf_predict1
+1           1           B
+2           2           A
+3           3           B
+4           4           A
+5           5           A
+6           6           E
+7           7           D
+8           8           B
+9           9           A
+10         10           A
+11         11           B
+12         12           C
+13         13           B
+14         14           A
+15         15           E
+16         16           E
+17         17           A
+18         18           B
+19         19           B
+20         20           B
+```
 
 
 
