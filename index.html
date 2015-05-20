@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Ml-prediction-assignment-writeup by desikazone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Ml-prediction-assignment-writeup</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/desikazone/ML-Prediction-Assignment-Writeup" class="btn">View on GitHub</a>
+      <a href="https://github.com/desikazone/ML-Prediction-Assignment-Writeup/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/desikazone/ML-Prediction-Assignment-Writeup/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="predictive-model-to-determine-the-exercising-pattern" class="anchor" href="#predictive-model-to-determine-the-exercising-pattern" aria-hidden="true"><span class="octicon octicon-link"></span></a>Predictive Model to determine the exercising pattern</h1>
+
+<p>This document describe the analysis done for the prediction assignment of the practical machine learning course.</p>
+
+<p>1.The first step is to load the csv file data to dataframe</p>
+
+<div class="highlight highlight-r"><pre>  <span class="pl-smi">pml_training</span><span class="pl-k">&lt;-</span>read.csv(<span class="pl-s"><span class="pl-pds">"</span>C:/Ebooks/R/coursera/Machine learning/Raw data/pml-training.csv<span class="pl-pds">"</span></span>)
+  <span class="pl-smi">pml_testing</span><span class="pl-k">&lt;-</span>read.csv(<span class="pl-s"><span class="pl-pds">"</span>C:/Ebooks/R/coursera/Machine learning/Raw data/pml-testing.csv<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>2.After loading the files, I split the pml_training data into test and training data so that I can cross validate the results/output.Pml_testing data is left untouched till finalization of the model.I have split the data such that 75% of the data is classified as training and rest as testing.</p>
+
+<div class="highlight highlight-r"><pre>  library(<span class="pl-smi">caret</span>)
+  library(<span class="pl-smi">kernlab</span>)
+  <span class="pl-smi">intrain</span><span class="pl-k">&lt;-</span>createDataPartition(<span class="pl-smi">pml_training</span><span class="pl-k">$</span><span class="pl-smi">classe</span>,<span class="pl-v">p</span><span class="pl-k">=</span>.<span class="pl-c1">75</span>,<span class="pl-v">list</span><span class="pl-k">=</span><span class="pl-c1">FALSE</span>)
+  <span class="pl-smi">training</span><span class="pl-k">&lt;-</span><span class="pl-smi">pml_training</span>[<span class="pl-smi">intrain</span>,]
+  <span class="pl-smi">test</span><span class="pl-k">&lt;-</span><span class="pl-smi">pml_training</span>[<span class="pl-k">-</span><span class="pl-smi">intrain</span>,]</pre></div>
+
+<p>3.Next is the data cleaning stage.</p>
+
+<p>a. First the column x present in the data is removed since it is just an index and will not be helpful for the analysis</p>
+
+<div class="highlight highlight-r"><pre>  <span class="pl-c">###remove column x which is just the index###</span>
+  <span class="pl-smi">train_cln1</span><span class="pl-k">&lt;-</span><span class="pl-smi">training</span>[,<span class="pl-k">-</span><span class="pl-c1">1</span>]</pre></div>
+
+<p>b. Second remove the columns with more than 60% NAs. Columns with more than 60% NAs will not be good enough to contribute to the predictive model.</p>
+
+<div class="highlight highlight-r"><pre>  <span class="pl-c">###Removing variables with more than 60% NAs####</span>
+  <span class="pl-smi">remove_var</span><span class="pl-k">&lt;-</span>rep(<span class="pl-c1">NA</span>,<span class="pl-c1">1</span>)<span class="pl-c">#create a vector with length 1 containing value NA</span>
+  <span class="pl-smi">temp</span>      <span class="pl-k">&lt;-</span>vector(<span class="pl-s"><span class="pl-pds">'</span>character<span class="pl-pds">'</span></span>) <span class="pl-c">#empty vectory</span>
+  <span class="pl-k">for</span> (<span class="pl-smi">i</span> <span class="pl-k">in</span> <span class="pl-c1">1</span><span class="pl-k">:</span>length(<span class="pl-smi">train_cln1</span>))
+  {
+   <span class="pl-k">if</span> (sum(is.na(<span class="pl-smi">train_cln1</span>[<span class="pl-smi">i</span>]))<span class="pl-k">/</span>nrow(<span class="pl-smi">train_cln1</span>[<span class="pl-smi">i</span>]) <span class="pl-k">&gt;</span><span class="pl-k">=</span>.<span class="pl-c1">6</span>) <span class="pl-smi">temp</span><span class="pl-k">&lt;-</span>colnames(<span class="pl-smi">train_cln1</span>[<span class="pl-smi">i</span>])<span class="pl-c">#get colname if NAs &gt;=.6</span>
+   <span class="pl-k">if</span> (length(<span class="pl-smi">temp</span>)<span class="pl-k">==</span><span class="pl-c1">1</span>) <span class="pl-smi">remove_var</span><span class="pl-k">&lt;-</span>unique(rbind(<span class="pl-smi">remove_var</span>,<span class="pl-smi">temp</span>))<span class="pl-c">#collate all colnames with NAs&gt;=.6</span>
+  }
+  <span class="pl-smi">remove_var</span>     <span class="pl-k">&lt;-</span>as.vector(<span class="pl-smi">remove_var</span>)<span class="pl-c">#convert into vector</span>
+  <span class="pl-smi">varNA</span>          <span class="pl-k">&lt;-</span>names(<span class="pl-smi">train_cln1</span>) <span class="pl-k">%in%</span> <span class="pl-smi">remove_var</span> <span class="pl-c">#finalizing columns with NAs &gt;=.6</span>
+  <span class="pl-smi">train_cln2</span>     <span class="pl-k">&lt;-</span><span class="pl-smi">train_cln1</span>[<span class="pl-k">!</span><span class="pl-smi">varNA</span>] <span class="pl-c">#dataset where columns with NAs&gt;=.6 removed</span></pre></div>
+
+<p>c. Next step is removal of near zero variance variables.Datasets sometimes contain variables which contain almost constant values throughout the data. These are non  informative and will not add any value to the model building process.</p>
+
+<div class="highlight highlight-r"><pre>  <span class="pl-c">####remove Near Zero Variance variables##########</span>
+  <span class="pl-smi">dataNZV</span>        <span class="pl-k">&lt;-</span> nearZeroVar(<span class="pl-smi">train_cln2</span>, <span class="pl-v">saveMetrics</span><span class="pl-k">=</span><span class="pl-c1">TRUE</span>)<span class="pl-c">#function  to find near zero variance variables</span>
+  <span class="pl-smi">NZVvar</span>         <span class="pl-k">&lt;-</span>as.vector(row.names(<span class="pl-smi">dataNZV</span>[<span class="pl-smi">dataNZV</span><span class="pl-k">$</span><span class="pl-smi">nzv</span><span class="pl-k">==</span><span class="pl-s"><span class="pl-pds">"</span>TRUE<span class="pl-pds">"</span></span>,]))<span class="pl-c">#obtain column names of near zero variance variables</span>
+  <span class="pl-smi">NZVvar_bin</span>     <span class="pl-k">&lt;-</span>names(<span class="pl-smi">train_cln2</span>) <span class="pl-k">%in%</span> <span class="pl-smi">NZVvar</span> <span class="pl-c">#match and pick the final near zero variance variables</span>
+  <span class="pl-smi">train_cln3</span>     <span class="pl-k">&lt;-</span><span class="pl-smi">train_cln2</span>[<span class="pl-k">!</span><span class="pl-smi">NZVvar_bin</span>] <span class="pl-c">#remove the NZV from training data</span></pre></div>
+
+<p>d. Final step is to clean training, validation and test datasets for removal of variables identified as non-important based on above 3 steps</p>
+
+<div class="highlight highlight-r"><pre> <span class="pl-c">#########cleaning both validation and test data sets########</span>
+<span class="pl-smi">cln1</span>           <span class="pl-k">&lt;-</span>names(<span class="pl-smi">train_cln3</span>)<span class="pl-c">#column names to be kept in training data</span>
+<span class="pl-smi">cln2</span>           <span class="pl-k">&lt;-</span>names(<span class="pl-smi">train_cln3</span>[<span class="pl-k">-</span><span class="pl-c1">58</span>])<span class="pl-c">#column names to be kept in testing data</span>
+<span class="pl-smi">test</span>           <span class="pl-k">&lt;-</span><span class="pl-smi">test</span>[<span class="pl-smi">cln1</span>]<span class="pl-c">#keep only column names in cln1 vector</span>
+<span class="pl-smi">pml_testing1</span>    <span class="pl-k">&lt;-</span><span class="pl-smi">pml_testing</span>[<span class="pl-smi">cln2</span>]<span class="pl-c">#keep column names present in cln2 vector</span>
+levels(<span class="pl-smi">pml_testing1</span><span class="pl-k">$</span><span class="pl-smi">cvtd_timestamp</span>)<span class="pl-k">&lt;-</span>levels(<span class="pl-smi">train_cln3</span><span class="pl-k">$</span><span class="pl-smi">cvtd_timestamp</span>)<span class="pl-c">#this step is included since R throws an error while predicting due to difference in levels of training and test data</span></pre></div>
+
+<p>4.Next stage is model building. Two models are build one is prediction with Decision tree and the other with Random Forest. Confusion matrix is obtained to check the accuracy of both the models built. Model with high accuracy is shortlisted for the final prediction.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c">##############Prediction using Decision Tree############</span>
+<span class="pl-smi">dtree_fit</span><span class="pl-k">&lt;-</span>rpart(<span class="pl-smi">classe</span><span class="pl-k">~</span>.,<span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>class<span class="pl-pds">"</span></span>,<span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">train_cln3</span>)
+library(<span class="pl-smi">rattle</span>)
+fancyRpartPlot(<span class="pl-smi">dtree_fit</span>)
+<span class="pl-smi">dtree_predict</span><span class="pl-k">&lt;-</span>predict(<span class="pl-smi">dtree_fit</span>,<span class="pl-smi">test</span>,<span class="pl-v">type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>class<span class="pl-pds">"</span></span>)
+confusionMatrix(<span class="pl-smi">dtree_predict</span>,<span class="pl-smi">test</span><span class="pl-k">$</span><span class="pl-smi">classe</span>)
+<span class="pl-smi">Confusion</span> <span class="pl-smi">Matrix</span> <span class="pl-smi">and</span> <span class="pl-smi">Statistics</span>
+
+          <span class="pl-smi">Reference</span>
+<span class="pl-smi">Prediction</span>    <span class="pl-smi">A</span>    <span class="pl-smi">B</span>    <span class="pl-smi">C</span>    <span class="pl-smi">D</span>    <span class="pl-smi">E</span>
+         <span class="pl-smi">A</span> <span class="pl-c1">1346</span>   <span class="pl-c1">44</span>    <span class="pl-c1">4</span>    <span class="pl-c1">1</span>    <span class="pl-c1">0</span>
+         <span class="pl-smi">B</span>   <span class="pl-c1">29</span>  <span class="pl-c1">785</span>   <span class="pl-c1">55</span>   <span class="pl-c1">44</span>    <span class="pl-c1">0</span>
+         <span class="pl-smi">C</span>   <span class="pl-c1">20</span>  <span class="pl-c1">117</span>  <span class="pl-c1">783</span>  <span class="pl-c1">119</span>   <span class="pl-c1">38</span>
+         <span class="pl-smi">D</span>    <span class="pl-c1">0</span>    <span class="pl-c1">3</span>    <span class="pl-c1">5</span>  <span class="pl-c1">508</span>   <span class="pl-c1">34</span>
+         <span class="pl-smi">E</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>    <span class="pl-c1">8</span>  <span class="pl-c1">132</span>  <span class="pl-c1">829</span>
+
+<span class="pl-smi">Overall</span> <span class="pl-smi">Statistics</span>
+
+               <span class="pl-smi">Accuracy</span> <span class="pl-k">:</span> <span class="pl-c1">0.8668</span>         
+                 <span class="pl-c1">95</span>% <span class="pl-smi">CI</span> <span class="pl-k">:</span> (<span class="pl-c1">0.857</span>, <span class="pl-c1">0.8762</span>)
+    <span class="pl-smi">No</span> <span class="pl-smi">Information</span> <span class="pl-smi">Rate</span> <span class="pl-k">:</span> <span class="pl-c1">0.2845</span>         
+    <span class="pl-smi">P</span><span class="pl-k">-</span><span class="pl-smi">Value</span> [<span class="pl-smi">Acc</span> <span class="pl-k">&gt;</span> <span class="pl-smi">NIR</span>] <span class="pl-k">:</span> <span class="pl-k">&lt;</span> <span class="pl-c1">2.2e-16</span>      
+
+                  <span class="pl-smi">Kappa</span> <span class="pl-k">:</span> <span class="pl-c1">0.8315</span>         
+ <span class="pl-smi">Mcnemar</span><span class="pl-s"><span class="pl-pds">'</span>s Test P-Value : NA             </span>
+<span class="pl-s"></span>
+<span class="pl-s">Statistics by Class:</span>
+<span class="pl-s"></span>
+<span class="pl-s">                     Class: A Class: B Class: C Class: D Class: E</span>
+<span class="pl-s">Sensitivity            0.9649   0.8272   0.9158   0.6318   0.9201</span>
+<span class="pl-s">Specificity            0.9860   0.9676   0.9274   0.9898   0.9650</span>
+<span class="pl-s">Pos Pred Value         0.9649   0.8598   0.7270   0.9236   0.8555</span>
+<span class="pl-s">Neg Pred Value         0.9860   0.9589   0.9812   0.9320   0.9817</span>
+<span class="pl-s">Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837</span>
+<span class="pl-s">Detection Rate         0.2745   0.1601   0.1597   0.1036   0.1690</span>
+<span class="pl-s">Detection Prevalence   0.2845   0.1862   0.2196   0.1122   0.1976</span>
+<span class="pl-s">Balanced Accuracy      0.9755   0.8974   0.9216   0.8108   0.9426</span>
+<span class="pl-s"></span>
+<span class="pl-s">###########Predictino using random forest###########</span>
+<span class="pl-s">rf_fit&lt;-randomForest(classe~.,data=train_cln3)</span>
+<span class="pl-s">rf_predict&lt;-predict(rf_fit,test,type="class")</span>
+<span class="pl-s">confusionMatrix(rf_predict,test$classe)</span>
+<span class="pl-s">Confusion Matrix and Statistics</span>
+<span class="pl-s"></span>
+<span class="pl-s">          Reference</span>
+<span class="pl-s">Prediction    A    B    C    D    E</span>
+<span class="pl-s">         A 1395    0    0    0    0</span>
+<span class="pl-s">         B    0  949    2    0    0</span>
+<span class="pl-s">         C    0    0  850    1    0</span>
+<span class="pl-s">         D    0    0    3  802    0</span>
+<span class="pl-s">         E    0    0    0    1  901</span>
+<span class="pl-s"></span>
+<span class="pl-s">Overall Statistics</span>
+<span class="pl-s"></span>
+<span class="pl-s">               Accuracy : 0.9986          </span>
+<span class="pl-s">                 95% CI : (0.9971, 0.9994)</span>
+<span class="pl-s">    No Information Rate : 0.2845          </span>
+<span class="pl-s">    P-Value [Acc &gt; NIR] : &lt; 2.2e-16       </span>
+<span class="pl-s"></span>
+<span class="pl-s">                  Kappa : 0.9982          </span>
+<span class="pl-s"> Mcnemar<span class="pl-pds">'</span></span><span class="pl-smi">s</span> <span class="pl-smi">Test</span> <span class="pl-smi">P</span><span class="pl-k">-</span><span class="pl-smi">Value</span> <span class="pl-k">:</span> <span class="pl-c1">NA</span>              
+
+<span class="pl-smi">Statistics</span> <span class="pl-smi">by</span> <span class="pl-smi">Class</span><span class="pl-k">:</span>
+
+                     <span class="pl-smi">Class</span><span class="pl-k">:</span> <span class="pl-smi">A</span> <span class="pl-smi">Class</span><span class="pl-k">:</span> <span class="pl-smi">B</span> <span class="pl-smi">Class</span><span class="pl-k">:</span> <span class="pl-smi">C</span> <span class="pl-smi">Class</span><span class="pl-k">:</span> <span class="pl-smi">D</span> <span class="pl-smi">Class</span><span class="pl-k">:</span> <span class="pl-smi">E</span>
+<span class="pl-smi">Sensitivity</span>            <span class="pl-c1">1.0000</span>   <span class="pl-c1">1.0000</span>   <span class="pl-c1">0.9942</span>   <span class="pl-c1">0.9975</span>   <span class="pl-c1">1.0000</span>
+<span class="pl-smi">Specificity</span>            <span class="pl-c1">1.0000</span>   <span class="pl-c1">0.9995</span>   <span class="pl-c1">0.9998</span>   <span class="pl-c1">0.9993</span>   <span class="pl-c1">0.9998</span>
+<span class="pl-smi">Pos</span> <span class="pl-smi">Pred</span> <span class="pl-smi">Value</span>         <span class="pl-c1">1.0000</span>   <span class="pl-c1">0.9979</span>   <span class="pl-c1">0.9988</span>   <span class="pl-c1">0.9963</span>   <span class="pl-c1">0.9989</span>
+<span class="pl-smi">Neg</span> <span class="pl-smi">Pred</span> <span class="pl-smi">Value</span>         <span class="pl-c1">1.0000</span>   <span class="pl-c1">1.0000</span>   <span class="pl-c1">0.9988</span>   <span class="pl-c1">0.9995</span>   <span class="pl-c1">1.0000</span>
+<span class="pl-smi">Prevalence</span>             <span class="pl-c1">0.2845</span>   <span class="pl-c1">0.1935</span>   <span class="pl-c1">0.1743</span>   <span class="pl-c1">0.1639</span>   <span class="pl-c1">0.1837</span>
+<span class="pl-smi">Detection</span> <span class="pl-smi">Rate</span>         <span class="pl-c1">0.2845</span>   <span class="pl-c1">0.1935</span>   <span class="pl-c1">0.1733</span>   <span class="pl-c1">0.1635</span>   <span class="pl-c1">0.1837</span>
+<span class="pl-smi">Detection</span> <span class="pl-smi">Prevalence</span>   <span class="pl-c1">0.2845</span>   <span class="pl-c1">0.1939</span>   <span class="pl-c1">0.1735</span>   <span class="pl-c1">0.1642</span>   <span class="pl-c1">0.1839</span>
+<span class="pl-smi">Balanced</span> <span class="pl-smi">Accuracy</span>      <span class="pl-c1">1.0000</span>   <span class="pl-c1">0.9997</span>   <span class="pl-c1">0.9970</span>   <span class="pl-c1">0.9984</span>   <span class="pl-c1">0.9999</span></pre></div>
+
+<p>5.Obtain the predictions by applying the model on test data.Since random forest method gives better accuracy it is finalized and applied on the test data to obtain the predictions</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c">#######since random forest method gives better accuracy using that on test data####</span>
+<span class="pl-smi">rf_predict1</span><span class="pl-k">&lt;-</span>predict(<span class="pl-smi">rf_fit</span>,<span class="pl-smi">pml_testing1</span>,<span class="pl-v">type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>class<span class="pl-pds">"</span></span>)
+cbind(<span class="pl-v">problem_id</span><span class="pl-k">=</span><span class="pl-smi">pml_testing</span><span class="pl-k">$</span><span class="pl-smi">problem_id</span>,as.data.frame(<span class="pl-smi">rf_predict1</span>))
+   <span class="pl-smi">problem_id</span> <span class="pl-smi">rf_predict1</span>
+<span class="pl-c1">1</span>           <span class="pl-c1">1</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">2</span>           <span class="pl-c1">2</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">3</span>           <span class="pl-c1">3</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">4</span>           <span class="pl-c1">4</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">5</span>           <span class="pl-c1">5</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">6</span>           <span class="pl-c1">6</span>           <span class="pl-smi">E</span>
+<span class="pl-c1">7</span>           <span class="pl-c1">7</span>           <span class="pl-smi">D</span>
+<span class="pl-c1">8</span>           <span class="pl-c1">8</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">9</span>           <span class="pl-c1">9</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">10</span>         <span class="pl-c1">10</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">11</span>         <span class="pl-c1">11</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">12</span>         <span class="pl-c1">12</span>           <span class="pl-smi">C</span>
+<span class="pl-c1">13</span>         <span class="pl-c1">13</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">14</span>         <span class="pl-c1">14</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">15</span>         <span class="pl-c1">15</span>           <span class="pl-smi">E</span>
+<span class="pl-c1">16</span>         <span class="pl-c1">16</span>           <span class="pl-smi">E</span>
+<span class="pl-c1">17</span>         <span class="pl-c1">17</span>           <span class="pl-smi">A</span>
+<span class="pl-c1">18</span>         <span class="pl-c1">18</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">19</span>         <span class="pl-c1">19</span>           <span class="pl-smi">B</span>
+<span class="pl-c1">20</span>         <span class="pl-c1">20</span>           <span class="pl-smi">B</span></pre></div>
+
+<p>6.Results obtained were uploaded to the coursera assignment submission gateway for online evaluation.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/desikazone/ML-Prediction-Assignment-Writeup">Ml-prediction-assignment-writeup</a> is maintained by <a href="https://github.com/desikazone">desikazone</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
