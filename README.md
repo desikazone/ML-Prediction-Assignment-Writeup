@@ -61,11 +61,11 @@ library(rattle)
 fancyRpartPlot(dtree_fit)
 dtree_predict<-predict(dtree_fit,test,type="class")
 confusionMatrix(dtree_predict,test$classe)
-Confusion Matrix and Statistics
+#Confusion Matrix and Statistics
 
-          Reference
-Prediction    A    B    C    D    E
-         A 1346   44    4    1    0
+ #         Reference
+#Prediction    A    B    C    D    E
+ #        A 1346   44    4    1    0
          B   29  785   55   44    0
          C   20  117  783  119   38
          D    0    3    5  508   34
